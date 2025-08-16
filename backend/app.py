@@ -109,15 +109,29 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 @app.post("/api/edit-nft")
-async def edit_nft(file_url: str = Form(...), brand: str = Form(...)):
+async def edit_nft(
+    file_url: str = Form(...),
+    brand: str = Form(...),
+    metadata_url: str = Form(None)
+):
     """
     Edit an NFT given its URL and a brand name.
+    If metadata_url is provided, return updated metadata with new image.
     """
     temp_file_path = None
     try:
-        # Download the NFT image from URL
+        # --- 1. Fetch metadata if provided ---
+        metadata = {}
+        if metadata_url:
+            try:
+                meta_resp = requests.get(metadata_url)
+                meta_resp.raise_for_status()
+                metadata = meta_resp.json()
+            except Exception as e:
+                print("⚠️ Metadata fetch failed:", e)
+
+        # --- 2. Download the NFT image ---
         resp = requests.get(file_url)
         resp.raise_for_status()
 
@@ -125,23 +139,34 @@ async def edit_nft(file_url: str = Form(...), brand: str = Form(...)):
             temp_file.write(resp.content)
             temp_file_path = temp_file.name
 
-        # Output path
+        # --- 3. Call OpenAI image edit ---
         output_path = f"edited_{os.path.basename(temp_file_path)}"
-
-        # Call OpenAI image edit
         edit_image(temp_file_path, brand, output_path)
 
-        # Return base64 encoded image
+        # --- 4. Encode final image ---
         with open(output_path, "rb") as f:
             image_base64 = base64.b64encode(f.read()).decode("utf-8")
 
-        return JSONResponse({"image_base64": image_base64})
+        # --- 5. Return updated metadata if available ---
+        if metadata:
+            # Replace image field
+            metadata["image"] = "data:image/png;base64," + image_base64
+            # Add brand attribute
+            metadata.setdefault("attributes", []).append({
+                "trait_type": "Brand",
+                "value": brand
+            })
+            return JSONResponse({"metadata": metadata})
+        else:
+            # Just return base64 image if no metadata given
+            return JSONResponse({"image_base64": image_base64})
 
     except Exception as e:
         print(traceback.format_exc())
         return JSONResponse({"error": str(e)}, status_code=500)
+
     finally:
-        # Clean up temp files
+        # --- 6. Clean up temp files ---
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
         if 'output_path' in locals() and os.path.exists(output_path):

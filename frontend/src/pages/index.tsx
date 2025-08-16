@@ -8,6 +8,7 @@ export default function Home() {
   const [nfts, setNfts] = useState<any[]>([]);
   const [account, setAccount] = useState<any>(null);
   const [collections, setCollections] = useState<{ name: string; nfts: any[] }[]>([]);
+  const [balances, setBalances] = useState<any[]>([]);
 
   const connectWallet = async () => {
     try {
@@ -36,6 +37,16 @@ export default function Home() {
     }
   };
 
+  const fetchBalances = async (address: string) => {
+    try {
+      const res = await fetch(`/api/cdp/balances?address=${address}`);
+      const data = await res.json();
+      setBalances(data.balances || []);
+    } catch (error) {
+      console.error("Error fetching balances:", error);
+    }
+  };
+
   useEffect(() => {
     const fetchCollections = async () => {
       try {
@@ -55,13 +66,21 @@ export default function Home() {
     fetchCollections();
   }, []);
 
+  useEffect(() => {
+    if (walletAddress) {
+      fetchBalances(walletAddress);
+    }
+  }, [walletAddress]);
+
   return (
     <div className="min-h-screen bg-gray-50 p-6">
       {/* Header */}
-      <h1 className="text-3xl font-extrabold text-blue-600 mb-6 text-center">NFT Brand Customizer</h1>
+      <h1 className="text-3xl font-extrabold text-blue-600 mb-6 text-center">
+        NFT Brand Customizer
+      </h1>
 
       {/* Wallet Connect */}
-      <div className="flex justify-center mb-6">
+      <div className="flex flex-col items-center gap-4 mb-6">
         {!walletAddress ? (
           <button
             onClick={connectWallet}
@@ -70,7 +89,24 @@ export default function Home() {
             Connect Coinbase Wallet
           </button>
         ) : (
-          <p className="px-6 py-3 bg-green-100 text-green-800 rounded-lg shadow">{`Connected: ${walletAddress}`}</p>
+          <>
+            <p className="px-6 py-3 bg-green-100 text-green-800 rounded-lg shadow">
+              {`Connected: ${walletAddress}`}
+            </p>
+            {balances.length > 0 && (
+              <div className="bg-white p-4 rounded-lg shadow w-full max-w-md">
+                <h3 className="font-bold text-lg mb-2">Token Balances</h3>
+                <ul className="divide-y divide-gray-200">
+                  {balances.map((bal: any, i: number) => (
+                    <li key={i} className="py-2 flex justify-between text-sm">
+                      <span>{bal.symbol}</span>
+                      <span>{bal.amount}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -95,7 +131,11 @@ export default function Home() {
       {account && (
         <div className="max-w-md mx-auto mb-6 p-5 bg-white rounded-xl shadow-md flex items-center gap-4">
           {account.profile_image_url && (
-            <img src={account.profile_image_url} alt="Profile" className="w-16 h-16 rounded-full" />
+            <img
+              src={account.profile_image_url}
+              alt="Profile"
+              className="w-16 h-16 rounded-full"
+            />
           )}
           <div>
             <h2 className="font-bold text-lg text-gray-800">{account.username}</h2>

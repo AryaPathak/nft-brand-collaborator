@@ -25,6 +25,16 @@ export default function CollectionViewer({ collectionName, nfts }: Props) {
   if (!nfts || nfts.length === 0) return null;
 
   const getImage = (i: NFT) => i.image_url || i.display_image_url || "";
+    const handleDownload = () => {
+    if (!editedImage) return;
+    const link = document.createElement("a");
+    link.href = editedImage;
+    link.download = `${selected?.name || "edited-nft"}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
 
   const handleEditNFT = async () => {
     if (!selected || !brandName) return alert("Select an NFT and enter a brand");
@@ -61,7 +71,7 @@ export default function CollectionViewer({ collectionName, nfts }: Props) {
         className="bg-white rounded-xl shadow hover:shadow-lg transition p-4 cursor-pointer flex flex-col items-center"
       >
         <img src={getImage(nfts[0])} alt="Cover" className="w-full h-48 object-cover rounded-lg" />
-        <div className="mt-2 font-semibold">{collectionName}</div>
+        <div className="mt-2 text-blue-300 font-semibold">{collectionName}</div>
       </div>
 
       {/* Modal */}
@@ -69,14 +79,14 @@ export default function CollectionViewer({ collectionName, nfts }: Props) {
         <div className="fixed inset-0 z-50 bg-black/70 flex justify-center items-start overflow-y-auto p-6">
           <div className="bg-white rounded-xl shadow-lg w-full max-w-6xl p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">{collectionName} Collection</h2>
+              <h2 className="text-xl text-blue-300 font-bold">{collectionName} Collection</h2>
               <button
                 onClick={() => {
                   setIsOpen(false);
                   setSelected(null);
                   setEditedImage(null);
                 }}
-                className="px-3 py-1 text-sm bg-red-400 rounded hover:bg-gray-300"
+                className="px-3 py-1 text-sm bg-red-400 rounded hover:bg-blue-300"
               >
                 Close
               </button>
@@ -94,7 +104,7 @@ export default function CollectionViewer({ collectionName, nfts }: Props) {
                     }`}
                   >
                     <img src={getImage(nft)} alt={nft.name} className="w-full h-48 object-cover" />
-                    <div className="p-2 text-sm font-medium">{nft.name || "Unnamed NFT"}</div>
+                    <div className="p-2 text-sm text-blue-300 font-medium">{nft.name || "Unnamed NFT"}</div>
                   </div>
                 ))}
               </div>
@@ -109,7 +119,7 @@ export default function CollectionViewer({ collectionName, nfts }: Props) {
                       placeholder="Enter brand name"
                       value={brandName}
                       onChange={(e) => setBrandName(e.target.value)}
-                      className="border px-3 py-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                      className="border px-3 py-2 text-blue-150 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
                     />
                     <button
                       onClick={handleEditNFT}
@@ -123,11 +133,18 @@ export default function CollectionViewer({ collectionName, nfts }: Props) {
                       <div className="mt-3">
                         <div className="text-sm font-semibold mb-2">Edited NFT Preview:</div>
                         <img src={editedImage} alt="Edited NFT" className="w-full object-cover rounded-lg" />
+                        <button
+                          onClick={handleDownload}
+                          className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+                        >
+                          Download NFT
+                        </button>
                       </div>
                     )}
+
                   </>
                 ) : (
-                  <div className="text-sm text-gray-500">Select an NFT to see details.</div>
+                  <div className="text-sm text-blue-300">Select an NFT to see details.</div>
                 )}
               </aside>
             </div>
