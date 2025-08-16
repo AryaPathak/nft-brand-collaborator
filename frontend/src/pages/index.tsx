@@ -39,13 +39,14 @@ export default function Home() {
 
   const fetchBalances = async (address: string) => {
     try {
-      const res = await fetch(`/api/cdp/balances?address=${address}`);
+      const res = await fetch(`http://127.0.0.1:8001/balances?address=${address}&network=base-sepolia`);
       const data = await res.json();
       setBalances(data.balances || []);
     } catch (error) {
       console.error("Error fetching balances:", error);
     }
   };
+
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -95,17 +96,18 @@ export default function Home() {
             </p>
             {balances.length > 0 && (
               <div className="bg-white p-4 rounded-lg shadow w-full max-w-md">
-                <h3 className="font-bold text-lg mb-2">Token Balances</h3>
-                <ul className="divide-y divide-gray-200">
+                <h3 className="font-bold text-blue-400 text-lg mb-2">Token Balances</h3>
+                <ul className="divide-y text-blue-400 divide-gray-200">
                   {balances.map((bal: any, i: number) => (
                     <li key={i} className="py-2 flex justify-between text-sm">
-                      <span>{bal.symbol}</span>
-                      <span>{bal.amount}</span>
+                      <span>{bal.name}</span>
+                      <span>{bal.amount.toFixed(6)}</span> {/* format amount nicely */}
                     </li>
                   ))}
                 </ul>
               </div>
             )}
+
           </>
         )}
       </div>
@@ -148,7 +150,7 @@ export default function Home() {
       <div className="max-w-6xl mx-auto p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {collections.map((col) => (
-            <CollectionViewer key={col.name} collectionName={col.name} nfts={col.nfts} />
+            <CollectionViewer key={col.name} collectionName={col.name} nfts={col.nfts} walletAddress={walletAddress} />
           ))}
         </div>
       </div>

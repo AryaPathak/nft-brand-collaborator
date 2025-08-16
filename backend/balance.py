@@ -12,7 +12,7 @@ async def main():
             print("Please set TARGET_ADDRESS in your environment or code.")
             return
 
-        network = "ethereum"  # or "base-sepolia", "ethereum", etc.
+        network = "base-sepolia"  # or "base-sepolia", "ethereum", etc.
         # Corrected call
         result = await cdp.evm.list_token_balances(address, network)
 

@@ -13,19 +13,24 @@ type NFT = {
 interface Props {
   collectionName: string;
   nfts: NFT[];
+  walletAddress: string | null;
 }
 
-export default function CollectionViewer({ collectionName, nfts }: Props) {
+export default function CollectionViewer({ collectionName, nfts, walletAddress }: Props) {
   const [isOpen, setIsOpen] = useState(false);
   const [selected, setSelected] = useState<NFT | null>(null);
   const [brandName, setBrandName] = useState("");
   const [editedImage, setEditedImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const PAYMENT_ADDRESS = "0x957a2A8F468f70Ea7FCabadCA7F8FdCF2e38D555";
+  const PAYMENT_AMOUNT_ETH = "0.0001"; // Amount in ETH
+
   if (!nfts || nfts.length === 0) return null;
 
   const getImage = (i: NFT) => i.image_url || i.display_image_url || "";
-    const handleDownload = () => {
+
+  const handleDownload = () => {
     if (!editedImage) return;
     const link = document.createElement("a");
     link.href = editedImage;
@@ -35,10 +40,48 @@ export default function CollectionViewer({ collectionName, nfts }: Props) {
     document.body.removeChild(link);
   };
 
+  const handlePayment = async (): Promise<boolean> => {
+    if (!walletAddress) {
+      alert("Please connect your wallet first!");
+      return false;
+    }
+    if (!(window as any).ethereum) {
+      alert("Wallet not detected!");
+      return false;
+    }
+
+    try {
+      const valueInWei = BigInt(parseFloat(PAYMENT_AMOUNT_ETH) * 1e18).toString(16);
+
+      const txHash = await (window as any).ethereum.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: walletAddress,
+            to: PAYMENT_ADDRESS,
+            value: "0x" + valueInWei,
+          },
+        ],
+      });
+
+      console.log("Payment sent. Tx Hash:", txHash);
+      alert("Payment successful!");
+      return true;
+    } catch (err) {
+      console.error("Payment failed:", err);
+      alert("Payment failed!");
+      return false;
+    }
+  };
 
   const handleEditNFT = async () => {
     if (!selected || !brandName) return alert("Select an NFT and enter a brand");
 
+    // ✅ Step 1: Payment
+    const paid = await handlePayment();
+    if (!paid) return;
+
+    // ✅ Step 2: Edit NFT
     setLoading(true);
     try {
       const formData = new FormData();
@@ -126,7 +169,7 @@ export default function CollectionViewer({ collectionName, nfts }: Props) {
                       className="bg-green-600 text-white px-4 py-2 rounded-lg"
                       disabled={loading}
                     >
-                      {loading ? "Editing..." : "Edit NFT"}
+                      {loading ? "Processing..." : "Pay & Edit NFT"}
                     </button>
 
                     {editedImage && (
@@ -141,7 +184,6 @@ export default function CollectionViewer({ collectionName, nfts }: Props) {
                         </button>
                       </div>
                     )}
-
                   </>
                 ) : (
                   <div className="text-sm text-blue-300">Select an NFT to see details.</div>
