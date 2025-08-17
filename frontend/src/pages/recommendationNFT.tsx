@@ -67,69 +67,91 @@ export default function RecommendationViewer({ brandName, onClose }: Props) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl shadow-lg w-full max-w-lg relative flex flex-col">
-        {/* Close Button */}
+return (
+  <div className="fixed inset-0 z-50 flex justify-end pointer-events-none">
+    {/* Sidebar floating over page */}
+    <div className="relative w-full max-w-md h-full pointer-events-auto flex flex-col rounded-l-3xl shadow-2xl overflow-hidden bg-[#11141a]/95 backdrop-blur-md border-l border-[#2a2e3a]">
+      
+      {/* Top Header */}
+      <div className="flex justify-between items-center px-6 py-4 bg-[#161822] border-b border-[#2a2e3a]">
+        <h2 className="text-lg font-bold text-white tracking-wide">NBC AI Chat</h2>
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-800"
+          aria-label="Close Chat"
+          className="text-text-muted hover:text-red-500 transition"
         >
-          <X size={20} />
+          <X size={24} />
         </button>
+      </div>
 
-        {/* Title */}
-        <h2 className="text-xl font-bold text-purple-600 mb-4">
-          NFT Brand Chat & Recommendations
-        </h2>
-
-        {/* Brand Info */}
-        {brandName ? (
-          <p className="text-gray-700 mb-3">
-            Generating NFT collection recommendations for brand:{" "}
-            <span className="font-semibold">{brandName}</span>
+      {/* Brand Info */}
+      {brandName && (
+        <div className="px-6 py-3 bg-[#1a1e28] border-b border-[#2a2e3a] text-center">
+          <p className="text-text-muted text-sm">
+            Generating NFT recommendations for:{" "}
+            <span className="font-semibold text-white">{brandName}</span>
           </p>
-        ) : (
-          <p className="text-gray-500">Please enter a brand name to continue.</p>
+        </div>
+      )}
+
+      {/* Suggested Prompts */}
+      <div className="px-6 py-3 flex flex-wrap gap-2 bg-[#1b1f29] border-b border-[#2a2e3a]">
+        {[
+          "Which NFT collection is better suited for Coca Cola?",
+          "Best NFT collections for tech startups",
+          "Trending NFT collections for gaming",
+          "NFT ideas for artists",
+          "Top NFT collections this week",
+        ].map((prompt, idx) => (
+          <button
+            key={idx}
+            onClick={() => setInput(prompt)}
+            className="bg-[#161822] text-text-primary px-3 py-1 rounded-xl text-xs hover:bg-gradient-to-r hover:from-[#3b82f6] hover:to-[#8b5cf6] hover:text-white transition shadow-sm"
+          >
+            {prompt.length > 35 ? prompt.slice(0, 55) + "..." : prompt}
+          </button>
+        ))}
+      </div>
+
+      {/* Chat / Recommendations */}
+      <div className="flex-1 flex flex-col overflow-hidden">
+        {/* Loading */}
+        {loading && (
+          <div className="px-6 py-3 bg-[#1a1d28] border-b border-[#2a2e3a] text-center">
+            <p className="text-text-muted text-sm animate-pulse">Loading recommendations...</p>
+          </div>
         )}
 
-        {/* Recommendations Section */}
-        <div className="bg-gray-50 p-3 rounded-lg mb-3">
-          <button
-            onClick={fetchRecommendations}
-            className="bg-purple-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-purple-700"
-            disabled={loading}
-          >
-            {loading ? "Loading..." : "Get Recommendations"}
-          </button>
-
-          {recommendations.length > 0 && (
-            <div className="mt-2">
-              <p className="text-sm font-semibold">Suggested Collections:</p>
-              <ul className="list-disc pl-5 text-gray-700 text-sm">
-                {recommendations.map((rec, idx) => (
-                  <li key={idx}>{rec}</li>
-                ))}
-              </ul>
-              <p className="text-xs text-gray-500 mt-2">{rationale}</p>
-            </div>
-          )}
-        </div>
+        {/* Recommendations */}
+        {recommendations.length > 0 && !loading && (
+          <div className="px-6 py-3 bg-[#1a1d28] border-b border-[#2a2e3a]">
+            <p className="text-sm font-semibold text-[#3b82f6] mb-2">Suggested Collections:</p>
+            <ul className="list-disc pl-5 text-text-muted text-sm space-y-1">
+              {recommendations.map((rec, idx) => (
+                <li key={idx}>{rec}</li>
+              ))}
+            </ul>
+            {rationale && <p className="text-xs text-text-muted mt-2">{rationale}</p>}
+          </div>
+        )}
 
         {/* Chat History */}
-        <div className="flex-1 overflow-y-auto border rounded-lg p-3 mb-3 bg-gray-50">
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-3 scrollbar-thin scrollbar-thumb-gray-700 scrollbar-track-gray-900">
+          {chatHistory.length === 0 && !loading && (
+            <p className="text-text-muted text-sm text-center">
+              Start the conversation by asking about NFT collections.
+            </p>
+          )}
           {chatHistory.map((msg, i) => (
             <div
               key={i}
-              className={`mb-2 ${
-                msg.sender === "user" ? "text-right" : "text-left"
-              }`}
+              className={`flex ${msg.sender === "user" ? "justify-end" : "justify-start"}`}
             >
               <span
-                className={`inline-block px-3 py-2 rounded-xl ${
+                className={`inline-block px-4 py-2 rounded-2xl max-w-[75%] break-words text-sm ${
                   msg.sender === "user"
-                    ? "bg-purple-600 text-white"
-                    : "bg-gray-200 text-gray-800"
+                    ? "bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white shadow-md"
+                    : "bg-[#161822] text-text-muted"
                 }`}
               >
                 {msg.text}
@@ -139,10 +161,11 @@ export default function RecommendationViewer({ brandName, onClose }: Props) {
         </div>
 
         {/* Input Box */}
-        <div className="flex items-center border rounded-lg px-2">
+        <div className="flex items-center px-4 py-3 border-t border-[#2a2e3a] bg-[#161822]">
           <input
             type="text"
-            className="flex-1 p-2 outline-none text-sm"
+            aria-label="Type a message"
+            className="flex-1 p-3 rounded-2xl outline-none text-sm bg-[#12141a] placeholder-text-muted text-text-primary mr-3 transition focus:ring-2 focus:ring-[#3b82f6]"
             placeholder="Ask about NFT collections..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
@@ -150,13 +173,16 @@ export default function RecommendationViewer({ brandName, onClose }: Props) {
           />
           <button
             onClick={handleSend}
-            disabled={loading}
-            className="text-purple-600 hover:text-purple-800 p-2"
+            disabled={loading || !input.trim()}
+            aria-label="Send message"
+            className="bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6] text-white px-4 py-2 rounded-2xl font-semibold text-sm disabled:opacity-60 transition shadow-md hover:shadow-lg"
           >
-            <Send size={18} />
+            {loading ? "Loading..." : "Send"}
           </button>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
+
 }

@@ -53,7 +53,7 @@ export default function Home() {
   useEffect(() => {
     const fetchCollections = async () => {
       try {
-        const names = ["cryptopunks", "cartlads", "doodles-official"];
+        const names = ["cryptopunks", "cartlads", "doodles-official", "azuki", "bad-bunnz", "mocaverse"];
         const results = await Promise.all(
           names.map(async (name) => {
             const res = await fetch(`http://127.0.0.1:8000/collection/${name}`);
@@ -75,35 +75,66 @@ export default function Home() {
     }
   }, [walletAddress]);
 
-  return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      {/* Header */}
-      <h1 className="text-3xl font-extrabold text-blue-600 mb-6 text-center">
-        NFT Brand Customizer
-      </h1>
+return (
+  <div className="min-h-screen bg-[#0b0d10] text-[#e6edf3] p-6">
+    {/* Top Navigation */}
+    <div className="flex items-start justify-between mb-10 flex-wrap">
+      {/* Fetch NFTs */}
+      <div className="flex flex-col items-start gap-2">
+        <div className="flex items-center gap-3">
+          <label className="sr-only" htmlFor="username">
+            OpenSea Username
+          </label>
+          <input
+            id="username"
+            type="text"
+            placeholder="Enter OpenSea username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            className="border border-border bg-surface rounded-xl px-4 py-2 w-64 text-sm placeholder-text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition"
+          />
+          <button
+            onClick={fetchNFTs}
+            aria-label="Fetch NFTs"
+            className="bg-success hover:bg-green-500 text-white px-4 py-2 rounded-xl font-semibold shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-success/60 focus:ring-offset-2 focus:ring-offset-[#0b0d10]"
+          >
+            Fetch NFTs
+          </button>
+        </div>
+        {/* Optional smaller token balance below Fetch NFTs */}
+        
+      </div>
 
       {/* Wallet Connect */}
-      <div className="flex flex-col items-center gap-4 mb-6">
+      <div className="flex flex-col items-end gap-2">
         {!walletAddress ? (
           <button
             onClick={connectWallet}
-            className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition duration-200"
+            aria-label="Connect Coinbase Wallet"
+            className="px-5 py-2 bg-primary hover:bg-blue-500 text-white font-semibold rounded-xl shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-primary/70 focus:ring-offset-2 focus:ring-offset-[#0b0d10]"
           >
-            Connect Coinbase Wallet
+            Connect Wallet
           </button>
         ) : (
           <>
-            <p className="px-6 py-3 bg-green-100 text-green-800 rounded-lg shadow">
+            <p className="px-4 py-1 bg-success/20 text-success rounded-lg shadow-md text-xs font-mono border border-success/30 truncate max-w-[200px]">
               {`Connected: ${walletAddress}`}
             </p>
+
+            {/* Token Balances below wallet button */}
             {balances.length > 0 && (
-              <div className="bg-white p-4 rounded-lg shadow w-full max-w-md">
-                <h3 className="font-bold text-blue-400 text-lg mb-2">Token Balances</h3>
-                <ul className="divide-y text-blue-400 divide-gray-200">
+              <div className="bg-surface p-3 rounded-xl shadow-md w-60 mt-2 border border-border text-sm">
+                <h4 className="font-semibold text-primary mb-2 text-sm">
+                  Token Balances
+                </h4>
+                <ul className="divide-y divide-border">
                   {balances.map((bal: any, i: number) => (
-                    <li key={i} className="py-2 flex justify-between text-sm">
-                      <span>{bal.name}</span>
-                      <span>{bal.amount.toFixed(6)}</span>
+                    <li
+                      key={i}
+                      className="py-1 flex justify-between text-gray-300"
+                    >
+                      <span className="truncate">{bal.name}</span>
+                      <span className="font-mono">{bal.amount.toFixed(6)}</span>
                     </li>
                   ))}
                 </ul>
@@ -112,61 +143,53 @@ export default function Home() {
           </>
         )}
       </div>
+    </div>
 
-      {/* Username input and fetch button */}
-      <div className="flex justify-center gap-3 mb-6">
-        <input
-          type="text"
-          placeholder="Enter OpenSea username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="border border-gray-300 rounded-lg px-4 py-2 w-64 focus:outline-none placeholder-gray-500 focus:ring-2 focus:ring-blue-400"
-        />
-        <button
-          onClick={fetchNFTs}
-          className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-semibold transition duration-200"
-        >
-          Fetch NFTs
-        </button>
-      </div>
+    {/* Header */}
+    <h1 className="text-5xl md:text-6xl font-extrabold text-primary mb-4 text-center tracking-tight drop-shadow-md font-sans uppercase">
+      NBC
+    </h1>
+    <p className="text-center text-text-muted text-lg md:text-xl mb-12 max-w-2xl mx-auto">
+      Customize, showcase, and amplify your NFT brand with style and ease.
+    </p>
 
-      {/* ✅ Brand Recommendation Input */}
-      <div className="flex justify-center gap-3 mb-8">
-        <input
-          type="text"
-          placeholder="Enter your Brand name"
-          value={brandName}
-          onChange={(e) => setBrandName(e.target.value)}
-          className="border border-gray-300 rounded-lg px-4 py-2 w-64 focus:outline-none placeholder-gray-500 focus:ring-2 focus:ring-purple-400"
-        />
-        <button
-          onClick={() => setShowRecommendation(true)}
-          className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg font-semibold transition duration-200"
-        >
-          Get Personalised Recommendation
-        </button>
-      </div>
+    {/* Brand Recommendation Input */}
+    <div className="flex justify-center gap-3 mb-12 flex-wrap">
+     
+      <button
+        onClick={() => setShowRecommendation(true)}
+        aria-label="Get Personalized Recommendation"
+        className="bg-accent hover:bg-purple-600 bg-purple-500 text-white px-5 py-2 rounded-xl font-semibold shadow-lg transition duration-200 focus:outline-none focus:ring-2 focus:ring-accent/60 focus:ring-offset-2 focus:ring-offset-[#0b0d10]"
+      >
+        Get Personalized Recommendation
+      </button>
+    </div>
 
-      {/* Account Info */}
-      {account && (
-        <div className="max-w-md mx-auto mb-6 p-5 bg-white rounded-xl shadow-md flex items-center gap-4">
-          {account.profile_image_url && (
-            <img
-              src={account.profile_image_url}
-              alt="Profile"
-              className="w-16 h-16 rounded-full"
-            />
-          )}
-          <div>
-            <h2 className="font-bold text-lg text-gray-800">{account.username}</h2>
-            <p className="text-gray-600 text-sm break-all">{account.address}</p>
-          </div>
+    {/* Account Info */}
+    {account && (
+      <div className="max-w-md mx-auto mb-10 p-5 bg-surface rounded-xl shadow-lg flex items-center gap-4 border border-border">
+        {account.profile_image_url && (
+          <img
+            src={account.profile_image_url}
+            alt="Profile"
+            className="w-16 h-16 rounded-full border border-border object-cover"
+          />
+        )}
+        <div className="overflow-hidden">
+          <h2 className="font-semibold text-lg text-white truncate">
+            {account.username}
+          </h2>
+          <p className="text-text-muted text-sm break-all font-mono">
+            {account.address}
+          </p>
         </div>
-      )}
+      </div>
+    )}
 
-      {/* NFT Collections Grid */}
-      <div className="max-w-6xl mx-auto p-4">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+    {/* NFT Collections Grid */}
+    <div className="max-w-6xl mx-auto p-4">
+      {collections.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {collections.map((col) => (
             <CollectionViewer
               key={col.name}
@@ -176,15 +199,21 @@ export default function Home() {
             />
           ))}
         </div>
-      </div>
-
-      {/* ✅ Show Recommendation Modal */}
-      {showRecommendation && (
-        <RecommendationViewer
-          brandName={brandName}
-          onClose={() => setShowRecommendation(false)}
-        />
+      ) : (
+        <p className="text-center text-text-muted italic mt-10">
+          No NFT collections found. Connect your wallet or enter a username to
+          fetch NFTs.
+        </p>
       )}
     </div>
-  );
+
+    {/* Recommendation Modal */}
+    {showRecommendation && (
+      <RecommendationViewer
+        brandName={brandName}
+        onClose={() => setShowRecommendation(false)}
+      />
+    )}
+  </div>
+);
 }
