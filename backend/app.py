@@ -11,10 +11,7 @@ import base64
 import requests
 import tempfile
 import traceback
-
-from test import edit_image
-
-# Load env variables
+from test import edit_image  # import your edit_image function
 load_dotenv()
 
 app = FastAPI()
@@ -165,8 +162,8 @@ async def edit_nft(
 
 from fastapi import UploadFile, File
 from fastapi.responses import FileResponse
-from NFTminting.mint import mint_only  # import from your mint.py
+from NFTminting.mint import mint_latest  # import from your mint.py
 
 @app.post("/api/mint-nft")
 async def mint_nft():
-    return mint_only()
+    return mint_latest()

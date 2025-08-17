@@ -4,6 +4,10 @@ from dotenv import load_dotenv
 from PIL import Image
 import os
 
+os.environ.pop("HTTP_PROXY", None)
+os.environ.pop("HTTPS_PROXY", None)
+os.environ.pop("ALL_PROXY", None)
+
 # Load .env
 load_dotenv()
 
@@ -11,7 +15,7 @@ api_key = os.getenv("OPENAI_API_KEY")
 if not api_key:
     raise ValueError("OPENAI_API_KEY not found in .env")
 
-client = OpenAI(api_key=api_key, timeout=120)
+client = OpenAI(api_key=api_key)
 
 def edit_image(image_path: str, brand_name: str, output_path: str = "edited_image.png"):
     """
@@ -43,7 +47,8 @@ def edit_image(image_path: str, brand_name: str, output_path: str = "edited_imag
             image=img_file,
             mask=mask_file,
             prompt=prompt,
-            size="1024x1024"
+            size="1024x1024",
+            timeout=600
         )
 
     # Decode returned image
