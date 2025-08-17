@@ -1,0 +1,53 @@
+{
+  "accounts": {
+    "emulator-account": {
+      "address": "f8d6e0586b0a20c7",
+      "key": {
+        "type": "hex",
+        "index": 0,
+        "signatureAlgorithm": "ECDSA_P256",
+        "hashAlgorithm": "SHA3_256",
+        "privateKey": "1067d527b98b89e50b6f69b2d041da95f1fc1338110a3cbefc9bd5ffa0cfc11d"
+      }
+    },
+    "testnet-deployer": {
+      "address": "0x8e1e0dc93cf85473",
+      "key": {
+        "type": "hex",
+        "index": 0,
+        "signatureAlgorithm": "ECDSA_P256",
+        "hashAlgorithm": "SHA3_256",
+        "privateKey": "d4cc40fae6746613feff12e18d9c5d5606cf2b829c89ab07a88e104f35ff4b6f"
+      }
+    }
+  },
+  "contracts": {
+    "NonFungibleToken": {
+      "source": "0x631e88ae7f1d7c20",
+      "aliases": {
+        "testnet": "0x631e88ae7f1d7c20"
+      }
+    },
+    "MetadataViews": {
+      "source": "0x631e88ae7f1d7c20",
+      "aliases": {
+        "testnet": "0x631e88ae7f1d7c20"
+      }
+    },
+    "MyImageNFTv2": {
+      "source": "./cadence/contracts/MyImageNFTv2.cdc",
+      "aliases": {
+        "testnet": "0x8e1e0dc93cf85473"
+      }
+    }
+  },
+  "deployments": {
+    "testnet": {
+      "testnet-deployer": ["MyImageNFTv2"]
+    }
+  },
+  "networks": {
+    "emulator": "127.0.0.1:3569",
+    "testnet": "access.devnet.nodes.onflow.org:9000"
+  }
+}

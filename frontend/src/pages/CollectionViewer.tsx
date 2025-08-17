@@ -88,16 +88,42 @@ export default function CollectionViewer({ collectionName, nfts, walletAddress }
       formData.append("file_url", getImage(selected));
       formData.append("brand", brandName);
 
+      // Optional: include metadata_url if available
+      if (selected.opensea_url) {
+        formData.append("metadata_url", selected.opensea_url);
+      }
+
       const res = await fetch("http://127.0.0.1:8000/api/edit-nft", {
         method: "POST",
         body: formData,
       });
-      const data = await res.json();
+
+      let data;
+      try {
+        data = await res.json();
+      } catch (err) {
+        console.error("Failed to parse JSON:", err);
+        alert("Backend did not return JSON");
+        return;
+      }
+
+
       if (data.error) {
         alert(data.error);
-      } else {
+      } else if (data.image_base64) {
+        // Case 1: backend returned base64 only
         setEditedImage(`data:image/png;base64,${data.image_base64}`);
+      } else if (data.metadata?.image) {
+        // Case 2: backend returned full metadata
+        setEditedImage(data.metadata.image);
       }
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Backend error:", text);
+        alert("Backend failed: " + text);
+        return;
+      }
+
     } catch (err) {
       console.error(err);
       alert("Failed to edit NFT");
@@ -147,7 +173,9 @@ export default function CollectionViewer({ collectionName, nfts, walletAddress }
                     }`}
                   >
                     <img src={getImage(nft)} alt={nft.name} className="w-full h-48 object-cover" />
-                    <div className="p-2 text-sm text-blue-300 font-medium">{nft.name || "Unnamed NFT"}</div>
+                    <div className="p-2 text-sm text-blue-300 font-medium">
+                      {nft.name || "Unnamed NFT"}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -156,7 +184,11 @@ export default function CollectionViewer({ collectionName, nfts, walletAddress }
               <aside className="bg-white border rounded-lg p-4 shadow-sm flex flex-col gap-3">
                 {selected ? (
                   <>
-                    <img src={getImage(selected)} alt={selected.name} className="w-full h-56 object-cover rounded" />
+                    <img
+                      src={getImage(selected)}
+                      alt={selected.name}
+                      className="w-full h-56 object-cover rounded"
+                    />
                     <input
                       type="text"
                       placeholder="Enter brand name"
@@ -173,16 +205,59 @@ export default function CollectionViewer({ collectionName, nfts, walletAddress }
                     </button>
 
                     {editedImage && (
-                      <div className="mt-3">
-                        <div className="text-sm font-semibold mb-2">Edited NFT Preview:</div>
-                        <img src={editedImage} alt="Edited NFT" className="w-full object-cover rounded-lg" />
+                      <>
+                        <img
+                          src={editedImage}
+                          alt="Edited NFT"
+                          className="w-full h-56 object-cover rounded mt-3"
+                        />
+                        <button
+                          onClick={async () => {
+                            const formData = new FormData();
+                            formData.append("file", await fetch(editedImage!).then((r) => r.blob()));
+                            formData.append("brand", brandName);
+
+                            const res = await fetch("http://127.0.0.1:8000/api/mint-nft", {
+                              method: "POST",
+                              body: formData,
+                            });
+
+                            if (res.ok) {
+                              // ✅ Always parse JSON from backend
+                              const data = await res.json();
+
+                              // Convert JSON to pretty text
+                              const textContent = JSON.stringify(data, null, 2);
+
+                              // Trigger download
+                              const blob = new Blob([textContent], { type: "text/plain" });
+                              const url = window.URL.createObjectURL(blob);
+                              const link = document.createElement("a");
+                              link.href = url;
+                              link.download = "nft-info.txt";
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              window.URL.revokeObjectURL(url);
+
+                              alert("NFT Minted Successfully!");
+                            } else {
+                              const err = await res.json();
+                              alert("Error: " + err.error);
+                            }
+                          }}
+                          className="mt-2 bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700"
+                        >
+                          Convert to NFT
+                        </button>
+
                         <button
                           onClick={handleDownload}
                           className="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
                         >
-                          Download NFT
+                          Download Edited NFT
                         </button>
-                      </div>
+                      </>
                     )}
                   </>
                 ) : (

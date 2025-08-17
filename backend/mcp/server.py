@@ -10,6 +10,14 @@ from typing import Dict, List, Optional
 import dotenv 
 import os
 
+from fastapi import FastAPI, UploadFile, Form
+from fastapi.responses import FileResponse, JSONResponse
+import os
+import shutil
+# Ensure mint.py exists in the same directory or adjust the import path accordingly
+from NFTminting.mint import mint_image, NFT_IMAGES_DIR
+
+
 dotenv.load_dotenv()
 OPENSEA_MCP_KEY = os.getenv("OPENSEA_MCP_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
@@ -190,3 +198,29 @@ if __name__ == "__main__":
         mcp.run()
     except KeyboardInterrupt:
         print("\nMCP server stopped.")
+
+
+
+@app.post("/api/mint-nft")
+async def mint_nft(file: UploadFile, brand: str = Form(...)):
+    try:
+        # Save uploaded file temporarily
+        save_path = os.path.join(NFT_IMAGES_DIR, file.filename)
+        with open(save_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+
+        # Call mint logic
+        file_path, nft_id, tx_output = mint_image(save_path, name=brand, description=f"Branded NFT {brand}")
+
+        if not nft_id:
+            return JSONResponse({"error": "Minting failed"}, status_code=500)
+
+        # Return log file to download
+        return FileResponse(
+            file_path,
+            media_type="text/plain",
+            filename=f"{nft_id}.txt"
+        )
+
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)

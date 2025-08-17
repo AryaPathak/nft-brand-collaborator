@@ -109,19 +109,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+from fastapi.responses import JSONResponse
+
 @app.post("/api/edit-nft")
 async def edit_nft(
     file_url: str = Form(...),
     brand: str = Form(...),
     metadata_url: str = Form(None)
 ):
-    """
-    Edit an NFT given its URL and a brand name.
-    If metadata_url is provided, return updated metadata with new image.
-    """
     temp_file_path = None
     try:
-        # --- 1. Fetch metadata if provided ---
         metadata = {}
         if metadata_url:
             try:
@@ -131,7 +128,6 @@ async def edit_nft(
             except Exception as e:
                 print("⚠️ Metadata fetch failed:", e)
 
-        # --- 2. Download the NFT image ---
         resp = requests.get(file_url)
         resp.raise_for_status()
 
@@ -139,35 +135,38 @@ async def edit_nft(
             temp_file.write(resp.content)
             temp_file_path = temp_file.name
 
-        # --- 3. Call OpenAI image edit ---
         output_path = f"edited_{os.path.basename(temp_file_path)}"
         edit_image(temp_file_path, brand, output_path)
 
-        # --- 4. Encode final image ---
         with open(output_path, "rb") as f:
             image_base64 = base64.b64encode(f.read()).decode("utf-8")
 
-        # --- 5. Return updated metadata if available ---
         if metadata:
-            # Replace image field
             metadata["image"] = "data:image/png;base64," + image_base64
-            # Add brand attribute
             metadata.setdefault("attributes", []).append({
                 "trait_type": "Brand",
                 "value": brand
             })
-            return JSONResponse({"metadata": metadata})
+            return {"metadata": metadata}
         else:
-            # Just return base64 image if no metadata given
-            return JSONResponse({"image_base64": image_base64})
+            return {"image_base64": image_base64}
 
     except Exception as e:
         print(traceback.format_exc())
-        return JSONResponse({"error": str(e)}, status_code=500)
+        return {"error": str(e)}
 
     finally:
-        # --- 6. Clean up temp files ---
         if temp_file_path and os.path.exists(temp_file_path):
             os.remove(temp_file_path)
         if 'output_path' in locals() and os.path.exists(output_path):
             os.remove(output_path)
+
+
+
+from fastapi import UploadFile, File
+from fastapi.responses import FileResponse
+from NFTminting.mint import mint_only  # import from your mint.py
+
+@app.post("/api/mint-nft")
+async def mint_nft():
+    return mint_only()
