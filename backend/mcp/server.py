@@ -1,11 +1,155 @@
 # backend/mcp/server.py
 import os
 import requests
+
+import json
+import uuid
+import time
+from openai import OpenAI
+from typing import Dict, List, Optional
+import dotenv 
+import os
+
+dotenv.load_dotenv()
+OPENSEA_MCP_KEY = os.getenv("OPENSEA_MCP_KEY")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+
+class OpenSeaMCPClient:
+    def __init__(self, api_key):
+        self.base_url = "https://mcp.opensea.io/mcp"
+        self.headers = {
+            "Authorization": f"Bearer {OPENSEA_MCP_KEY}",
+            "Content-Type": "application/json",
+            "Accept": "application/json, text/event-stream"
+        }
+        self.request_id = 1
+        self.session_id = None
+        self.initialize_and_setup_session()
+    
+    def handle_sse_response(self, response):
+        """Handle Server-Sent Events response"""
+        events = []
+        for line in response.iter_lines(decode_unicode=True):
+            if line.startswith('data: '):
+                try:
+                    data = json.loads(line[6:])
+                    events.append(data)
+                except json.JSONDecodeError:
+                    events.append({"raw": line[6:]})
+        return events
+    
+    def send_request(self, method, params=None, use_session_id=True):
+        """Send JSON-RPC request"""
+        payload = {
+            "jsonrpc": "2.0",
+            "method": method,
+            "id": self.request_id
+        }
+        
+        if params:
+            payload["params"] = params
+        
+        headers = self.headers.copy()
+        if use_session_id and self.session_id:
+            headers["Mcp-Session-Id"] = self.session_id
+        
+        try:
+            response = requests.post(self.base_url, 
+                                   json=payload,
+                                   headers=headers,
+                                   stream=True,
+                                   timeout=30)
+            
+            self.request_id += 1
+            
+            if 'Mcp-Session-Id' in response.headers:
+                self.session_id = response.headers['Mcp-Session-Id']
+            
+            content_type = response.headers.get('content-type', '')
+            
+            if 'text/event-stream' in content_type:
+                return self.handle_sse_response(response)
+            else:
+                return response.json()
+                
+        except requests.exceptions.RequestException as e:
+            return {"error": str(e)}
+    
+    def initialize_and_setup_session(self):
+        """Initialize connection with proper session handling"""
+        if not self.session_id:
+            self.session_id = str(uuid.uuid4())
+        
+        params = {
+            "protocolVersion": "2024-11-05",
+            "capabilities": {
+                "roots": {"listChanged": True},
+                "sampling": {}
+            },
+            "clientInfo": {
+                "name": "Python MCP Client",
+                "version": "1.0"
+            }
+        }
+        
+        result = self.send_request("initialize", params, use_session_id=True)
+        
+        if isinstance(result, dict) and result.get('error'):
+            result = self.send_request("initialize", params, use_session_id=False)
+            if not self.session_id:
+                self.session_id = str(uuid.uuid4())
+        
+        return result
+    
+    def list_available_tools(self):
+        """Get available tools from the MCP server"""
+        return self.send_request("tools/list")
+    
+    def get_collection_data(self, collection_slug):
+        """Get comprehensive collection data"""
+        collection_tools = [
+            ("get_collection", {"slug": collection_slug}),
+            ("get_collection_stats", {"collection_slug": collection_slug}),
+            ("collection_stats", {"slug": collection_slug}),
+            ("get_collection_info", {"collection": collection_slug})
+        ]
+        
+        for tool_name, args in collection_tools:
+            result = self.send_request("tools/call", {
+                "name": tool_name,
+                "arguments": args
+            })
+            
+            if not (isinstance(result, dict) and result.get('error')):
+                return result
+        
+        return {"error": "No data available"}
+    
+    def search_collections(self, query):
+        """Search for collections"""
+        search_tools = [
+            ("search_collections", {"query": query}),
+            ("find_collection", {"name": query}),
+            ("collection_search", {"search_term": query})
+        ]
+        
+        for tool_name, args in search_tools:
+            result = self.send_request("tools/call", {
+                "name": tool_name,
+                "arguments": args
+            })
+            
+            if not (isinstance(result, dict) and result.get('error')):
+                return result
+        
+        return {"error": "Search not available"}
+
 from fastmcp import FastMCP
 import dotenv
 
 # Load .env
 dotenv.load_dotenv()
+
 
 OPENSEA_MCP_KEY = os.getenv("OPENSEA_MCP_KEY")
 if not OPENSEA_MCP_KEY:

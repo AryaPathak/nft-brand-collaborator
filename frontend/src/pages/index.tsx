@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import CoinbaseWalletSDK from "@coinbase/wallet-sdk";
 import CollectionViewer from "./CollectionViewer";
+import RecommendationViewer from "./recommendationNFT";
 
 export default function Home() {
   const [walletAddress, setWalletAddress] = useState<string | null>(null);
   const [username, setUsername] = useState("");
+  const [brandName, setBrandName] = useState(""); // ✅ new state for brand input
+  const [showRecommendation, setShowRecommendation] = useState(false); // ✅ toggle modal
   const [nfts, setNfts] = useState<any[]>([]);
   const [account, setAccount] = useState<any>(null);
   const [collections, setCollections] = useState<{ name: string; nfts: any[] }[]>([]);
@@ -46,7 +49,6 @@ export default function Home() {
       console.error("Error fetching balances:", error);
     }
   };
-
 
   useEffect(() => {
     const fetchCollections = async () => {
@@ -101,13 +103,12 @@ export default function Home() {
                   {balances.map((bal: any, i: number) => (
                     <li key={i} className="py-2 flex justify-between text-sm">
                       <span>{bal.name}</span>
-                      <span>{bal.amount.toFixed(6)}</span> {/* format amount nicely */}
+                      <span>{bal.amount.toFixed(6)}</span>
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-
           </>
         )}
       </div>
@@ -126,6 +127,23 @@ export default function Home() {
           className="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg font-semibold transition duration-200"
         >
           Fetch NFTs
+        </button>
+      </div>
+
+      {/* ✅ Brand Recommendation Input */}
+      <div className="flex justify-center gap-3 mb-8">
+        <input
+          type="text"
+          placeholder="Enter your Brand name"
+          value={brandName}
+          onChange={(e) => setBrandName(e.target.value)}
+          className="border border-gray-300 rounded-lg px-4 py-2 w-64 focus:outline-none placeholder-gray-500 focus:ring-2 focus:ring-purple-400"
+        />
+        <button
+          onClick={() => setShowRecommendation(true)}
+          className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-2 rounded-lg font-semibold transition duration-200"
+        >
+          Get Personalised Recommendation
         </button>
       </div>
 
@@ -150,10 +168,23 @@ export default function Home() {
       <div className="max-w-6xl mx-auto p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {collections.map((col) => (
-            <CollectionViewer key={col.name} collectionName={col.name} nfts={col.nfts} walletAddress={walletAddress} />
+            <CollectionViewer
+              key={col.name}
+              collectionName={col.name}
+              nfts={col.nfts}
+              walletAddress={walletAddress}
+            />
           ))}
         </div>
       </div>
+
+      {/* ✅ Show Recommendation Modal */}
+      {showRecommendation && (
+        <RecommendationViewer
+          brandName={brandName}
+          onClose={() => setShowRecommendation(false)}
+        />
+      )}
     </div>
   );
 }
